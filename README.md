@@ -95,13 +95,13 @@ This script allows you to clone all the public repositories from a GitLab instan
 Example #1:
 
 ```bash
-./gitlab-clone-public-repos gitlab.com/gitterHQ/
-# ... clones all repos of "gitterHQ"
+./gitlab-clone-public-repos gitlab.com/gabrielengel_gl/
+# ... clones all repos of "gabrielengel_gl"
 ```
 
 Example #2:
 
 ```bash
-./gitlab-clone-public-repos https://github.com/gitterHQ/test/whatever/it/does/not/matter
-# ... clones all repos of "gitterHQ"
+./gitlab-clone-public-repos https://github.com/gabrielengel_gl/test/whatever/it/does/not/matter
+# ... clones all repos of "gabrielengel_gl"
 ```
