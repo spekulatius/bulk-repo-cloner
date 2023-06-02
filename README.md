@@ -29,6 +29,22 @@ This script allows you to clone all the public repositories from a BitBucket pro
 - `<username>`: The BitBucket username for which you want to clone public repositories.
 - `[target_directory]` (optional): The directory where you want to clone the repositories. If not provided, the current directory will be used as the target directory.
 
+### Examples
+
+Example #1:
+
+```bash
+./github-clone-public-repos spekulatius
+# ... clones all repos of "spekulatius"
+```
+
+Example #2:
+
+```bash
+./github-clone-public-repos https://github.com/spekulatius/test/whatever/it/does/not/matter
+# ... clones all repos of "spekulatius"
+```
+
 
 ## GitLab: `gitlab-clone-public-repos`
 
@@ -43,3 +59,19 @@ This script allows you to clone all the public repositories from a GitLab instan
 - `<instance_url>`: The URL of the GitLab instance from which you want to clone public repositories.
 - `<username>`: The GitLab username for which you want to clone public repositories.
 - `[target_directory]` (optional): The directory where you want to clone the repositories. If not provided, the current directory will be used as the target directory.
+
+### Examples
+
+Example #1:
+
+```bash
+./gitlab-clone-public-repos gitlab.com/gitterHQ/
+# ... clones all repos of "gitterHQ"
+```
+
+Example #2:
+
+```bash
+./gitlab-clone-public-repos https://github.com/gitterHQ/test/whatever/it/does/not/matter
+# ... clones all repos of "gitterHQ"
+```
