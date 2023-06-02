@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Check if jq is installed
+if ! command -v jq >/dev/null; then
+    echo "Error: 'jq' is not installed. Please install 'jq' before running this script."
+    exit 1
+fi
+
 # Check if the username parameter is provided
 if [ $# -eq 0 ]; then
     echo "Error: Bitbucket username is missing."
@@ -33,8 +39,10 @@ for URL in $REPO_URLS; do
         cd "$TARGET_DIR/$REPO_NAME"
         git pull
         cd "$TARGET_DIR"
+        echo
     else
         echo "Cloning repository: $REPO_NAME"
         git clone "$URL" "$TARGET_DIR/$REPO_NAME"
+        echo
     fi
 done
