@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# Check if the instance URL and username parameters are provided
+if [ $# -lt 2 ]; then
+    echo "Error: GitLab instance URL or username is missing."
+    echo "Usage: $0 <instance_url> <username> [target_directory]"
+    exit 1
+fi
+
+# Set the GitLab instance URL and username
+INSTANCE_URL="$1"
+USERNAME="$2"
+
+# Add "https://" if the URL doesn't start with it
+if ! [[ $INSTANCE_URL =~ ^https?:// ]]; then
+    INSTANCE_URL="https://$INSTANCE_URL"
+fi
+
+# Set the target directory or fallback to the current directory
+TARGET_DIR="${3:-$(pwd)}"
+mkdir $TARGET_DIR -p
+
+# Fetch the repository URLs using the GitLab API
+REPO_URLS=$(curl -s "$INSTANCE_URL/api/v4/users/$USERNAME/projects?visibility=public&per_page=1000" | jq -r '.[].http_url_to_repo')
+
+# Check if the username is valid and repositories are found
+if [ -z "$REPO_URLS" ]; then
+    echo "No public repositories found for the GitLab user: $USERNAME"
+    exit 1
+fi
+
+# Iterate over each repository URL
+for URL in $REPO_URLS; do
+    # Extract the repository name from the URL
+    REPO_NAME=$(basename -s .git "$URL")
+
+    # Check if the directory already exists
+    if [ -d "$TARGET_DIR/$REPO_NAME" ]; then
+        echo "Repository '$REPO_NAME' already exists in '$TARGET_DIR'. Updating..."
+        cd "$TARGET_DIR/$REPO_NAME"
+        git pull
+        cd "$TARGET_DIR"
+    else
+        echo "Cloning repository: $REPO_NAME"
+        git clone "$URL" "$TARGET_DIR/$REPO_NAME"
+    fi
+done
