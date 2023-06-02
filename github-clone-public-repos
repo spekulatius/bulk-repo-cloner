@@ -1,23 +1,55 @@
 #!/bin/bash
 
-# Check if the username parameter is provided
-if [ $# -eq 0 ]; then
-    echo "Error: GitHub username is missing."
-    echo "Usage: $0 <username> [target_directory]"
+# Check if jq is installed
+if ! command -v jq >/dev/null; then
+    echo "Error: 'jq' is not installed. Please install 'jq' before running this script."
     exit 1
 fi
 
-# Set the GitHub username
-USERNAME="$1"
+# Check if the username/URL parameter is provided
+if [ $# -eq 0 ]; then
+    echo "Error: GitHub username or URL is missing."
+    echo "Usage: $0 <username_or_url> [target_directory]"
+    exit 1
+fi
+
+# Function to extract the GitHub username from a URL
+extract_username_from_url() {
+    local url=$1
+    local username=""
+    if [[ $url =~ github\.com/([^/]+) ]]; then
+        username=${BASH_REMATCH[1]}
+    fi
+    echo "$username"
+}
+
+# Function to extract the repository name from a URL
+extract_repo_name_from_url() {
+    local url=$1
+    local repo_name=""
+    if [[ $url =~ github\.com/[^/]+/([^/]+)/?.* ]]; then
+        repo_name=${BASH_REMATCH[1]}
+    fi
+    echo "$repo_name"
+}
+
+# Extract the GitHub username or URL from the parameter
+PARAMETER="$1"
+USERNAME=$(extract_username_from_url "$PARAMETER")
 
 # Set the target directory or fallback to the current directory
 TARGET_DIR="${2:-$(pwd)}"
-mkdir $TARGET_DIR -p
+mkdir "$TARGET_DIR" -p
+
+if [ -z "$USERNAME" ]; then
+  # The input is a username
+  USERNAME="$PARAMETER"
+fi
 
 # Fetch the repository URLs using the GitHub API
-REPO_URLS=$(curl -s "https://api.github.com/users/$USERNAME/repos?type=public&per_page=1000" | grep -o 'git@[^"]*')
+REPO_URLS=$(curl -s "https://api.github.com/users/$USERNAME/repos?type=public&per_page=1000" | jq -r '.[].clone_url')
 
-# Check if the username is valid and repositories are found
+# Check if repositories are found
 if [ -z "$REPO_URLS" ]; then
     echo "No public repositories found for the GitHub user: $USERNAME"
     exit 1
@@ -28,7 +60,7 @@ for URL in $REPO_URLS; do
     # Extract the repository name from the URL
     REPO_NAME=$(basename -s .git "$URL")
     echo
-    echo "Processing $REPO_NAME"
+    echo "Processing '$REPO_NAME'..."
     echo "============================================"
 
     # Check if the directory already exists

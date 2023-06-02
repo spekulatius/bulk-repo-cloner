@@ -6,24 +6,40 @@ if ! command -v jq >/dev/null; then
     exit 1
 fi
 
-# Check if the username parameter is provided
+# Function to extract the Bitbucket username from a URL
+extract_username_from_url() {
+    local url=$1
+    local username=""
+    if [[ $url =~ bitbucket\.org/([^/]+) ]]; then
+        username=${BASH_REMATCH[1]}
+    fi
+    echo "$username"
+}
+
+# Check if the username/URL parameter is provided
 if [ $# -eq 0 ]; then
-    echo "Error: Bitbucket username is missing."
-    echo "Usage: $0 <username> [target_directory]"
+    echo "Error: Bitbucket username or URL is missing."
+    echo "Usage: $0 <username_or_url> [target_directory]"
     exit 1
 fi
 
-# Set the Bitbucket username
-USERNAME="$1"
+# Extract the Bitbucket username or URL from the parameter
+PARAMETER="$1"
+USERNAME=$(extract_username_from_url "$PARAMETER")
 
 # Set the target directory or fallback to the current directory
 TARGET_DIR="${2:-$(pwd)}"
-mkdir $TARGET_DIR -p
+mkdir "$TARGET_DIR" -p
+
+if [ -z "$USERNAME" ]; then
+  # The input is a username
+  USERNAME="$PARAMETER"
+fi
 
 # Fetch the repository URLs using the Bitbucket API
 REPO_URLS=$(curl -s "https://api.bitbucket.org/2.0/repositories/$USERNAME" | jq -r '.values[].links.clone[].href')
 
-# Check if the username is valid and repositories are found
+# Check if repositories are found
 if [ -z "$REPO_URLS" ]; then
     echo "No repositories found for the Bitbucket user: $USERNAME"
     exit 1
@@ -34,7 +50,7 @@ for URL in $REPO_URLS; do
     # Extract the repository name from the URL
     REPO_NAME=$(basename -s .git "$URL")
     echo
-    echo "Processing $REPO_NAME"
+    echo "Processing '$REPO_NAME'..."
     echo "============================================"
 
     # Check if the directory already exists

@@ -1,27 +1,84 @@
 #!/bin/bash
 
-# Check if the instance URL and username parameters are provided
-if [ $# -lt 2 ]; then
-    echo "Error: GitLab instance URL or username is missing."
-    echo "Usage: $0 <instance_url> <username> [target_directory]"
+# Check if jq is installed
+if ! command -v jq >/dev/null; then
+    echo "Error: 'jq' is not installed. Please install 'jq' before running this script."
     exit 1
 fi
 
-# Set the GitLab instance URL and username
-INSTANCE_URL="$1"
-USERNAME="$2"
+# Check if awk is installed
+if ! command -v awk >/dev/null; then
+    echo "Error: 'awk' is not installed. Please install 'awk' before running this script."
+    exit 1
+fi
+
+# Check if sed is installed
+if ! command -v sed >/dev/null; then
+    echo "Error: 'sed' is not installed. Please install 'sed' before running this script."
+    exit 1
+fi
+
+# Check if the GitLab URL parameter is provided
+if [ $# -lt 1 ]; then
+    echo "Error: GitLab URL is missing."
+    echo "Usage: $0 <gitlab_url> [target_directory]"
+    exit 1
+fi
+
+# Function to extract the GitLab username from the URL
+extract_gitlab_username() {
+    local url=$1
+    local username=""
+
+    # Extract the username from the URL
+    if [[ $url == *"://"* ]]; then
+        username=$(echo "$url" | awk -F/ '{print $4}')
+    elif [[ $url == *"/"* ]]; then
+        username=$(echo "$url" | awk -F/ '{print $2}')
+    else
+        username="$url"
+    fi
+
+    echo "$username"
+}
+
+# Function to extract the GitLab hostname from the URL
+extract_gitlab_hostname() {
+    local url=$1
+    local hostname=""
+
+    # Extract the hostname from the URL
+    if [[ $url =~ ^(?:https?://)?([^/]+) ]]; then
+        hostname=${BASH_REMATCH[1]}
+    fi
+
+    # Use "gitlab.com" as the default if hostname is empty
+    if [ -z "$hostname" ]; then
+        hostname="gitlab.com"
+    fi
+
+    echo "$hostname"
+}
+
+
+# Extract the GitLab username and hostname from the GitLab URL
+GITLAB_URL="$1"
+GITLAB_URL=${GITLAB_URL%/}  # Remove trailing slash if present
+USERNAME=$(extract_gitlab_username "$GITLAB_URL")
+HOSTNAME=$(extract_gitlab_hostname "$GITLAB_URL")
+
 
 # Add "https://" if the URL doesn't start with it
-if ! [[ $INSTANCE_URL =~ ^https?:// ]]; then
-    INSTANCE_URL="https://$INSTANCE_URL"
+if ! [[ $HOSTNAME =~ ^https?:// ]]; then
+    HOSTNAME="https://$HOSTNAME"
 fi
 
 # Set the target directory or fallback to the current directory
-TARGET_DIR="${3:-$(pwd)}"
-mkdir $TARGET_DIR -p
+TARGET_DIR="${2:-$(pwd)}"
+mkdir "$TARGET_DIR" -p
 
 # Fetch the repository URLs using the GitLab API
-REPO_URLS=$(curl -s "$INSTANCE_URL/api/v4/users/$USERNAME/projects?visibility=public&per_page=1000" | jq -r '.[].http_url_to_repo')
+REPO_URLS=$(curl -s "$HOSTNAME/api/v4/users/$USERNAME/projects?visibility=public&per_page=1000" | jq -r '.[].http_url_to_repo')
 
 # Check if the username is valid and repositories are found
 if [ -z "$REPO_URLS" ]; then
@@ -34,7 +91,7 @@ for URL in $REPO_URLS; do
     # Extract the repository name from the URL
     REPO_NAME=$(basename -s .git "$URL")
     echo
-    echo "Processing $REPO_NAME"
+    echo "Processing '$REPO_NAME'..."
     echo "============================================"
 
     # Check if the directory already exists
