@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Check if the username parameter is provided
+if [ $# -eq 0 ]; then
+    echo "Error: Bitbucket username is missing."
+    echo "Usage: $0 <username> [target_directory]"
+    exit 1
+fi
+
+# Set the Bitbucket username
+USERNAME="$1"
+
+# Set the target directory or fallback to the current directory
+TARGET_DIR="${2:-$(pwd)}"
+
+# Fetch the repository URLs using the Bitbucket API
+REPO_URLS=$(curl -s "https://api.bitbucket.org/2.0/repositories/$USERNAME" | jq -r '.values[].links.clone[].href')
+
+# Check if the username is valid and repositories are found
+if [ -z "$REPO_URLS" ]; then
+    echo "No repositories found for the Bitbucket user: $USERNAME"
+    exit 1
+fi
+
+# Iterate over each repository URL
+for URL in $REPO_URLS; do
+    # Extract the repository name from the URL
+    REPO_NAME=$(basename -s .git "$URL")
+
+    # Check if the directory already exists
+    if [ -d "$TARGET_DIR/$REPO_NAME" ]; then
+        echo "Repository '$REPO_NAME' already exists in '$TARGET_DIR'. Updating..."
+        cd "$TARGET_DIR/$REPO_NAME"
+        git pull
+        cd "$TARGET_DIR"
+    else
+        echo "Cloning repository: $REPO_NAME"
+        git clone "$URL" "$TARGET_DIR/$REPO_NAME"
+    fi
+done
