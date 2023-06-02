@@ -17,9 +17,16 @@ fi
 extract_username_from_url() {
     local url=$1
     local username=""
-    if [[ $url =~ github\.com/([^/]+) ]]; then
-        username=${BASH_REMATCH[1]}
+
+    # Extract the username from the URL
+    if [[ $url == *"://"* ]]; then
+        username=$(echo "$url" | awk -F/ '{print $4}')
+    elif [[ $url == *"/"* ]]; then
+        username=$(echo "$url" | awk -F/ '{print $2}')
+    else
+        username="$url"
     fi
+
     echo "$username"
 }
 
@@ -27,19 +34,21 @@ extract_username_from_url() {
 extract_repo_name_from_url() {
     local url=$1
     local repo_name=""
+
     if [[ $url =~ github\.com/[^/]+/([^/]+)/?.* ]]; then
         repo_name=${BASH_REMATCH[1]}
     fi
+
     echo "$repo_name"
 }
-
-# Extract the GitHub username or URL from the parameter
-PARAMETER="$1"
-USERNAME=$(extract_username_from_url "$PARAMETER")
 
 # Set the target directory or fallback to the current directory
 TARGET_DIR="${2:-$(pwd)}"
 mkdir "$TARGET_DIR" -p
+
+# Extract the GitHub username or URL from the parameter
+PARAMETER="$1"
+USERNAME=$(extract_username_from_url "$PARAMETER")
 
 if [ -z "$USERNAME" ]; then
   # The input is a username
