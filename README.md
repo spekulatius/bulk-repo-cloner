@@ -1,4 +1,4 @@
-# Public Repo Cloning Scripts for GitHub, GitLab and BitBucket
+# Bulk Repo Cloner for GitHub, GitLab and BitBucket
 
 A set of bash scripts to interact with a repos from GitHub, BitBucket, and GitLab.
 
