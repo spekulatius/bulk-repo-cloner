@@ -3,12 +3,16 @@
 # Check if the username parameter is provided
 if [ $# -eq 0 ]; then
     echo "Error: GitHub username is missing."
-    echo "Usage: $0 <username>"
+    echo "Usage: $0 <username> [target_directory]"
     exit 1
 fi
 
 # Set the GitHub username
 USERNAME="$1"
+
+# Set the target directory or fallback to the current directory
+TARGET_DIR="${2:-$(pwd)}"
+mkdir $TARGET_DIR -p
 
 # Fetch the repository URLs using the GitHub API
 REPO_URLS=$(curl -s "https://api.github.com/users/$USERNAME/repos?type=public&per_page=1000" | grep -o 'git@[^"]*')
@@ -25,13 +29,15 @@ for URL in $REPO_URLS; do
     REPO_NAME=$(basename -s .git "$URL")
 
     # Check if the directory already exists
-    if [ -d "$REPO_NAME" ]; then
-        echo "Repository '$REPO_NAME' already exists. Updating..."
-        cd "$REPO_NAME"
+    if [ -d "$TARGET_DIR/$REPO_NAME" ]; then
+        echo "Repository '$REPO_NAME' already exists in '$TARGET_DIR'. Updating..."
+        cd "$TARGET_DIR/$REPO_NAME"
         git pull
-        cd ..
+        cd "$TARGET_DIR"
+        echo
     else
         echo "Cloning repository: $REPO_NAME"
-        git clone "$URL"
+        git clone "$URL" "$TARGET_DIR/$REPO_NAME"
+        echo
     fi
 done
