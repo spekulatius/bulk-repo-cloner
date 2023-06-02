@@ -18,6 +18,7 @@ USERNAME="$1"
 
 # Set the target directory or fallback to the current directory
 TARGET_DIR="${2:-$(pwd)}"
+mkdir $TARGET_DIR -p
 
 # Fetch the repository URLs using the Bitbucket API
 REPO_URLS=$(curl -s "https://api.bitbucket.org/2.0/repositories/$USERNAME" | jq -r '.values[].links.clone[].href')
