@@ -19,7 +19,19 @@ if [ -z "$REPO_URLS" ]; then
     exit 1
 fi
 
-# Iterate over each repository URL and clone it
+# Iterate over each repository URL
 for URL in $REPO_URLS; do
-    git clone "$URL"
+    # Extract the repository name from the URL
+    REPO_NAME=$(basename -s .git "$URL")
+
+    # Check if the directory already exists
+    if [ -d "$REPO_NAME" ]; then
+        echo "Repository '$REPO_NAME' already exists. Updating..."
+        cd "$REPO_NAME"
+        git pull
+        cd ..
+    else
+        echo "Cloning repository: $REPO_NAME"
+        git clone "$URL"
+    fi
 done
