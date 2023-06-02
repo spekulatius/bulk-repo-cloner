@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Check if the username parameter is provided
+if [ $# -eq 0 ]; then
+    echo "Error: GitHub username is missing."
+    echo "Usage: $0 <username>"
+    exit 1
+fi
+
+# Set the GitHub username
+USERNAME="$1"
+
+# Fetch the repository URLs using the GitHub API
+REPO_URLS=$(curl -s "https://api.github.com/users/$USERNAME/repos?type=public&per_page=1000" | grep -o 'git@[^"]*')
+
+# Check if the username is valid and repositories are found
+if [ -z "$REPO_URLS" ]; then
+    echo "No public repositories found for the GitHub user: $USERNAME"
+    exit 1
+fi
+
+# Iterate over each repository URL and clone it
+for URL in $REPO_URLS; do
+    git clone "$URL"
+done
