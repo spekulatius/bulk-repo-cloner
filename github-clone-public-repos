@@ -27,6 +27,9 @@ fi
 for URL in $REPO_URLS; do
     # Extract the repository name from the URL
     REPO_NAME=$(basename -s .git "$URL")
+    echo
+    echo "Processing $REPO_NAME"
+    echo "============================================"
 
     # Check if the directory already exists
     if [ -d "$TARGET_DIR/$REPO_NAME" ]; then
